@@ -1,4 +1,4 @@
-# multirdp_licenses — Redmine-Plugin „Lizenzen“ für multiRDP
+# redmine_lizense_provider — Redmine-Plugin „Lizenzen“ für multiRDP
 
 Verwaltet Lizenzen für den multiRDP-Client (macOS/Windows): Administratoren legen
 Lizenzen an, füllen die Vorgabe (Server und RemoteApps) und teilen sie Benutzern zu.
@@ -23,13 +23,14 @@ Sprache: Deutsch (Code-Kommentare, Oberfläche), englische Übersetzung in `en.y
 
 ## Einbau
 
-Das Plugin muss im Verzeichnis **`plugins/multirdp_licenses`** liegen — Redmine leitet
-die Plugin-Kennung aus dem Verzeichnisnamen ab; ein anderer Name (z. B. der Repo-Name
-`redmine_lizense_provider`) führt zu `PluginNotFound`.
+Das Plugin muss im Verzeichnis **`plugins/redmine_lizense_provider`** liegen (Kennung =
+Repo-Name); Redmine leitet die Plugin-Kennung aus dem Verzeichnisnamen ab, ein anderer
+Name führt zu `PluginNotFound`. Frühere Fassungen hießen `multirdp_licenses`; `init.rb`
+benennt deren Migrationseinträge in `schema_migrations` beim ersten Start automatisch um.
 
 ```bash
 cd /usr/src/redmine
-git clone <repo> plugins/multirdp_licenses
+git clone https://github.com/leanderkretschmer/redmine_lizense_provider plugins/redmine_lizense_provider
 bundle exec rake redmine:plugins:migrate RAILS_ENV=production
 # Verschlüsselungsschlüssel anlegen (siehe unten), dann Redmine neu starten
 ```
@@ -37,7 +38,7 @@ bundle exec rake redmine:plugins:migrate RAILS_ENV=production
 Im Containerfile der Dev-Instanz entspricht das den anderen Plugin-Zeilen:
 
 ```dockerfile
-RUN git clone -b main <repo> plugins/multirdp_licenses/ && cd plugins/multirdp_licenses && git checkout <commit>
+RUN git clone -b main https://github.com/leanderkretschmer/redmine_lizense_provider plugins/redmine_lizense_provider/ && cd plugins/redmine_lizense_provider && git checkout <commit>
 ```
 
 Zusätzliche Gems werden nicht benötigt.
@@ -45,8 +46,8 @@ Zusätzliche Gems werden nicht benötigt.
 ## Rücknahme
 
 ```bash
-bundle exec rake redmine:plugins:migrate NAME=multirdp_licenses VERSION=0 RAILS_ENV=production
-rm -rf plugins/multirdp_licenses
+bundle exec rake redmine:plugins:migrate NAME=redmine_lizense_provider VERSION=0 RAILS_ENV=production
+rm -rf plugins/redmine_lizense_provider
 ```
 
 Die vier Tabellen (`multirdp_licenses`, `multirdp_grants`, `multirdp_devices`,
@@ -228,7 +229,7 @@ Fenster-Zuordnungen — absichtlich nicht, siehe Vorgabe. Nicht stillschweigend 
 ## Tests
 
 ```bash
-bundle exec rake redmine:plugins:test NAME=multirdp_licenses RAILS_ENV=test
+bundle exec rake redmine:plugins:test NAME=redmine_lizense_provider RAILS_ENV=test
 ```
 
 65 Tests / 296 Zusicherungen: Einheitentests (Modelle, Symbolprüfung, Verschlüsselung

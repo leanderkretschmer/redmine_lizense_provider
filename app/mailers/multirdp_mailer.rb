@@ -16,7 +16,7 @@ class MultirdpMailer < Mailer
 
     device_requested(user, device).deliver_later
   rescue StandardError => e
-    Rails.logger.error("[multirdp_licenses] Mailversand fehlgeschlagen: #{e.class}: #{e.message}") if Rails.logger
+    Rails.logger.error("[redmine_lizense_provider] Mailversand fehlgeschlagen: #{e.class}: #{e.message}") if Rails.logger
     nil
   end
 end

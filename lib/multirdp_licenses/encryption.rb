@@ -26,7 +26,7 @@ module MultirdpLicenses
 
         key = load_key
         if key.nil?
-          Rails.logger.error("[multirdp_licenses] Kein Verschlüsselungsschlüssel: weder ENV #{ENV_NAME} " \
+          Rails.logger.error("[redmine_lizense_provider] Kein Verschlüsselungsschlüssel: weder ENV #{ENV_NAME} " \
                              "noch #{key_file_path} vorhanden. WireGuard-Konfigurationen können nicht " \
                              "gespeichert werden.") if Rails.logger
           return false
@@ -79,7 +79,7 @@ module MultirdpLicenses
         return nil if key.empty?
 
         if key.length < MIN_KEY_LENGTH
-          Rails.logger.error("[multirdp_licenses] Verschlüsselungsschlüssel zu kurz (mindestens #{MIN_KEY_LENGTH} Zeichen).") if Rails.logger
+          Rails.logger.error("[redmine_lizense_provider] Verschlüsselungsschlüssel zu kurz (mindestens #{MIN_KEY_LENGTH} Zeichen).") if Rails.logger
           return nil
         end
         key

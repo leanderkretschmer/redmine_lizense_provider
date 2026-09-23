@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Namensraum des Plugins "multirdp_licenses".
+# Ruby-Namensraum des Plugins "redmine_lizense_provider".
 module MultirdpLicenses
   # Einzige Lizenzart bislang.
   KIND_MULTIRDP = 'multirdp'

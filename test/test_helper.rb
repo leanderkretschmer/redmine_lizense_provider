@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Lädt Redmines Test-Helfer; die Plugin-Tests laufen mit
-#   bundle exec rake redmine:plugins:test NAME=multirdp_licenses RAILS_ENV=test
+#   bundle exec rake redmine:plugins:test NAME=redmine_lizense_provider RAILS_ENV=test
 require File.expand_path(File.dirname(__FILE__) + '/../../../test/test_helper')
 require 'zlib'
 
