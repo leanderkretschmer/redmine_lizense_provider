@@ -25,6 +25,22 @@ class MultirdpLicensesControllerTest < Redmine::ControllerTest
     assert_select 'table.list td.name a', text: 'multiRDP — Büro Hamburg'
   end
 
+  # Die Formularfelder müssen unter demselben Schlüssel ankommen, den der Controller liest.
+  def test_new_and_edit_forms_use_license_param_key
+    get :new
+    assert_response :success
+    assert_select 'input[name=?]', 'license[name]'
+    assert_select 'input[name=?]', 'license[grace_days]'
+    assert_select 'textarea[name=?]', 'license[notes]'
+    assert_select 'input[name^=?]', 'multirdp_license[', 0
+
+    license = create_license
+    get :edit, params: { id: license.id }
+    assert_response :success
+    assert_select 'input[name=?][value=?]', 'license[name]', license.name
+    assert_select 'input[name=?][value=?]', 'license[servers][0][host]', '192.168.6.46'
+  end
+
   def test_create_with_servers_and_apps
     png = Rack::Test::UploadedFile.new(StringIO.new(build_png(32, 32)), 'image/png', original_filename: 'icon.png')
     assert_difference 'MultirdpLicense.count' do
