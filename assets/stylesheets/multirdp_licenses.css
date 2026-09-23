@@ -1,0 +1,24 @@
+/* multirdp_licenses */
+.multirdp-approval {
+  position: fixed; right: 16px; bottom: 16px; z-index: 1000; max-width: 380px;
+  background: #fffbe6; border: 1px solid #e0c96b; border-radius: 4px; padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25); font-size: 0.95em;
+}
+.multirdp-approval h3 { margin: 0 0 8px 0; }
+.multirdp-approval-request { border-top: 1px solid #eee; padding-top: 6px; }
+.multirdp-approval-meta { color: #555; font-size: 0.9em; }
+.multirdp-approval-actions form { display: inline-block; margin-right: 6px; }
+.multirdp-approve input[type=submit], input.multirdp-approve { font-weight: bold; }
+.multirdp-status { padding: 1px 6px; border-radius: 3px; font-size: 0.85em; color: #fff; background: #888; }
+.multirdp-status-active, .multirdp-status-approved { background: #2e8b57; }
+.multirdp-status-pending { background: #d8a600; }
+.multirdp-status-suspended, .multirdp-status-expired { background: #b8740f; }
+.multirdp-status-revoked, .multirdp-status-denied { background: #b22222; }
+.multirdp-server-row, .multirdp-app-row { margin-bottom: 8px; }
+.multirdp-icon { vertical-align: middle; margin-right: 4px; }
+.multirdp-uuid { color: #888; font-family: monospace; }
+.multirdp-json { max-height: 300px; overflow: auto; }
+.multirdp-candidates { list-style: none; padding: 0; max-height: 240px; overflow: auto; }
+.multirdp-pubkey { font-size: 0.8em; word-break: break-all; }
+.multirdp-secret { border-top: 1px solid #eee; padding-top: 6px; }
+td.buttons form { display: inline-block; }

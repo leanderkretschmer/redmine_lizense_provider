@@ -1,0 +1,39 @@
+<%= error_messages_for 'license' %>
+<%= javascript_include_tag 'multirdp_licenses', plugin: 'multirdp_licenses' %>
+
+<div class="box tabular">
+  <p><%= f.text_field :name, required: true, size: 60, label: :field_name %></p>
+  <p><%= f.text_area :notes, rows: 3, cols: 60, label: :field_multirdp_notes %></p>
+  <p><%= f.text_field :grace_days, size: 5, label: :field_multirdp_grace_days %>
+     <em class="info"><%= l(:text_multirdp_grace_days_info) %></em></p>
+  <p><label><%= l(:field_multirdp_kind) %></label> <%= h @license.kind_label %>
+     <% if @license.persisted? %>&nbsp; <label><%= l(:field_multirdp_revision) %></label> <%= @license.revision %><% end %></p>
+</div>
+
+<fieldset class="box multirdp-data-form">
+  <legend><%= l(:label_multirdp_data_legend) %></legend>
+  <p class="info"><%= l(:text_multirdp_data_info) %></p>
+
+  <div id="multirdp-servers">
+    <% @license.servers.each_with_index do |server, i| %>
+      <%= render partial: 'server_fields', locals: { server: server, index: i } %>
+    <% end %>
+  </div>
+  <p><button type="button" class="multirdp-add-server icon icon-add"><%= sprite_icon('add', l(:button_multirdp_add_server)) %></button></p>
+
+  <h4><%= l(:label_multirdp_app_plural) %></h4>
+  <div id="multirdp-apps">
+    <% @license.apps.each_with_index do |app, i| %>
+      <%= render partial: 'app_fields', locals: { app: app, index: i } %>
+    <% end %>
+  </div>
+  <p><button type="button" class="multirdp-add-app icon icon-add"><%= sprite_icon('add', l(:button_multirdp_add_app)) %></button></p>
+
+  <%# Vorlagen für neue Zeilen (werden per JS geklont) %>
+  <template id="multirdp-server-template">
+    <%= render partial: 'server_fields', locals: { server: MultirdpLicenses::DataSchema.normalize_server({}), index: '__INDEX__' } %>
+  </template>
+  <template id="multirdp-app-template">
+    <%= render partial: 'app_fields', locals: { app: MultirdpLicenses::DataSchema.normalize_app({}), index: '__INDEX__' } %>
+  </template>
+</fieldset>

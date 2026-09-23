@@ -1,0 +1,131 @@
+<h2><%= link_to l(:label_multirdp_licenses), multirdp_licenses_path %> &#187; <%= link_to h(@license.name), multirdp_license_path(@license) %> &#187; <%= h @grant.user.name %></h2>
+
+<% unless @encryption_ready %>
+  <div class="flash warning"><%= l(:text_multirdp_encryption_missing, env: MultirdpLicenses::Encryption::ENV_NAME, file: MultirdpLicenses::Encryption.key_file_path) %></div>
+<% end %>
+
+<div class="splitcontent">
+<div class="splitcontentleft">
+  <div class="box tabular">
+    <h3><%= l(:label_multirdp_grant) %> <%= multirdp_grant_status_tag(@grant) %></h3>
+    <%= form_tag multirdp_grant_path(@grant), method: :patch do %>
+      <p><label for="grant_status"><%= l(:field_status) %></label>
+         <%= select_tag 'grant[status]', options_for_select(MultirdpGrant::STATUSES.map { |s| [l(:"label_multirdp_grant_status_#{s}"), s] }, @grant.status) %></p>
+      <p><label for="grant_valid_until"><%= l(:field_multirdp_valid_until) %></label>
+         <%= date_field_tag 'grant[valid_until]', @grant.valid_until, size: 12 %> <em class="info"><%= l(:text_multirdp_valid_until_info) %></em></p>
+      <p><%= submit_tag l(:button_save) %></p>
+    <% end %>
+    <p><%= l(:field_multirdp_settings_revision) %>: <%= @grant.settings_revision %>,
+       <%= l(:label_multirdp_last_synced) %>: <%= @grant.last_synced_at ? format_time(@grant.last_synced_at) : l(:label_multirdp_never) %></p>
+    <p><%= link_to sprite_icon('del', l(:button_delete)), multirdp_grant_path(@grant), method: :delete, data: { confirm: l(:text_are_you_sure) }, class: 'icon icon-del' %></p>
+  </div>
+
+  <div class="box">
+    <h3><%= l(:label_multirdp_vpn_config) %></h3>
+    <p class="info"><%= l(:text_multirdp_secret_info) %></p>
+    <% if @license.servers.empty? %>
+      <p class="nodata"><%= l(:label_multirdp_no_servers) %></p>
+    <% end %>
+    <% @license.servers.each do |server| %>
+      <% stored_at = @grant.secret_updated_at(server['id']) %>
+      <div class="multirdp-secret">
+        <p><strong><%= h server['name'] %></strong>
+          <% if stored_at %>
+            &mdash; <%= l(:label_multirdp_secret_stored_at, time: format_time(stored_at)) %>
+            <%= link_to sprite_icon('del', l(:button_delete)), secret_multirdp_grant_path(@grant, server['id']), method: :delete,
+                        data: { confirm: l(:text_are_you_sure) }, class: 'icon icon-del' %>
+          <% else %>
+            &mdash; <%= l(:label_multirdp_secret_none) %>
+          <% end %>
+        </p>
+        <%= form_tag secrets_multirdp_grant_path(@grant), method: :post, multipart: true, class: 'multirdp-secret-form' do %>
+          <%= hidden_field_tag 'server_id', server['id'], id: nil %>
+          <p><%= text_area_tag 'wireguard_config', '', rows: 4, cols: 60, id: nil, placeholder: '[Interface] …', autocomplete: 'off' %></p>
+          <p><%= file_field_tag 'wireguard_file', id: nil %></p>
+          <p><%= submit_tag(stored_at ? l(:button_multirdp_secret_replace) : l(:button_multirdp_secret_store), disabled: !@encryption_ready) %></p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="splitcontentright">
+  <div class="box">
+    <h3><%= l(:label_multirdp_device_plural) %></h3>
+    <% if @devices.empty? %>
+      <p class="nodata"><%= l(:label_multirdp_no_devices) %></p>
+    <% else %>
+      <table class="list">
+        <thead><tr>
+          <th><%= l(:field_multirdp_device_name) %></th>
+          <th><%= l(:field_multirdp_platform) %></th>
+          <th><%= l(:field_multirdp_app_version) %></th>
+          <th><%= l(:field_status) %></th>
+          <th><%= l(:field_multirdp_last_seen_at) %></th>
+          <th><%= l(:field_multirdp_last_seen_ip) %></th>
+          <th><%= l(:field_multirdp_public_key) %></th>
+          <th></th>
+        </tr></thead>
+        <tbody>
+        <% @devices.each do |device| %>
+          <tr class="<%= cycle('odd', 'even') %>">
+            <td><%= h device.to_s %></td>
+            <td><%= multirdp_platform_label(device.platform) %></td>
+            <td><%= h device.app_version %></td>
+            <td><%= multirdp_device_status_tag(device) %></td>
+            <td><%= device.last_seen_at ? format_time(device.last_seen_at) : '-' %></td>
+            <td><%= h device.last_seen_ip %></td>
+            <td><% if device.public_key.present? %><code class="multirdp-pubkey"><%= h device.public_key %></code><% else %>-<% end %></td>
+            <td class="buttons">
+              <% unless device.revoked? %>
+                <%= link_to sprite_icon('lock', l(:button_multirdp_revoke_device)), revoke_multirdp_device_path(device), method: :post,
+                            data: { confirm: l(:text_are_you_sure) }, class: 'icon icon-lock' %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+
+  <div class="box">
+    <h3><%= l(:label_multirdp_settings_of_user) %></h3>
+    <% s = @grant.settings %>
+    <p><%= l(:label_multirdp_own_apps) %>: <%= Array(s['ownApps']).size %>,
+       <%= l(:label_multirdp_workspace_items) %>: <%= Array(s.dig('workspace', 'items')).size %></p>
+    <details><summary><%= l(:label_multirdp_show_json) %></summary>
+      <pre class="multirdp-json"><%= h JSON.pretty_generate(s) %></pre></details>
+  </div>
+</div>
+</div>
+
+<h3><%= l(:label_multirdp_event_plural) %></h3>
+<% if @events.empty? %>
+  <p class="nodata"><%= l(:label_no_data) %></p>
+<% else %>
+  <table class="list">
+    <thead><tr>
+      <th><%= l(:field_created_on) %></th>
+      <th><%= l(:field_multirdp_action) %></th>
+      <th><%= l(:label_user) %></th>
+      <th><%= l(:field_multirdp_device_name) %></th>
+      <th><%= l(:field_multirdp_ip) %></th>
+      <th><%= l(:field_multirdp_detail) %></th>
+    </tr></thead>
+    <tbody>
+    <% @events.each do |event| %>
+      <tr class="<%= cycle('odd', 'even') %>">
+        <td><%= format_time(event.created_at) %></td>
+        <td><%= h event.action_label %></td>
+        <td><%= event.user ? link_to_user(event.user) : '-' %></td>
+        <td><%= event.device ? h(event.device.to_s) : '-' %></td>
+        <td><%= h event.ip %></td>
+        <td><%= h event.detail %></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+<% html_title l(:label_administration), l(:label_multirdp_licenses), @license.name, @grant.user.name %>

@@ -1,0 +1,6 @@
+<h2><%= link_to l(:label_multirdp_licenses), multirdp_licenses_path %> &#187; <%= link_to h(@license.name), multirdp_license_path(@license) %> &#187; <%= l(:button_edit) %></h2>
+<%= labelled_form_for @license, url: multirdp_license_path(@license), method: :patch, html: { multipart: true, id: 'multirdp-license-form' } do |f| %>
+  <%= render partial: 'form', locals: { f: f } %>
+  <%= submit_tag l(:button_save) %>
+<% end %>
+<% html_title l(:label_administration), l(:label_multirdp_licenses), @license.name %>

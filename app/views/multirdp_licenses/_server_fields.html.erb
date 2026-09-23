@@ -1,0 +1,21 @@
+<% p = "license[servers][#{index}]" %>
+<div class="multirdp-server-row box tabular" data-server-id="<%= h server['id'] %>">
+  <input type="hidden" name="<%= p %>[id]" value="<%= h server['id'] %>" class="multirdp-server-id" />
+  <p><label><%= l(:field_multirdp_server_name) %> <span class="required">*</span></label>
+     <input type="text" name="<%= p %>[name]" value="<%= h server['name'] %>" size="30" class="multirdp-server-name" /></p>
+  <p><label><%= l(:field_multirdp_host) %> <span class="required">*</span></label>
+     <input type="text" name="<%= p %>[host]" value="<%= h server['host'] %>" size="30" /></p>
+  <p><label><%= l(:field_multirdp_port) %></label>
+     <input type="number" name="<%= p %>[port]" value="<%= server['port'] %>" min="0" max="65535" size="6" />
+     <em class="info"><%= l(:text_multirdp_port_info) %></em></p>
+  <p><label><%= l(:field_multirdp_username) %></label>
+     <input type="text" name="<%= p %>[username]" value="<%= h server['username'] %>" size="30" /></p>
+  <p><label><%= l(:field_multirdp_domain) %></label>
+     <input type="text" name="<%= p %>[domain]" value="<%= h server['domain'] %>" size="30" /></p>
+  <p><label><%= l(:field_multirdp_vpn_mode) %></label>
+     <%= select_tag "#{p}[vpnMode]", options_for_select(multirdp_vpn_mode_options, server['vpnMode'].to_i) %></p>
+  <p><label><%= l(:field_multirdp_vpn_endpoint) %></label>
+     <input type="text" name="<%= p %>[vpnEndpoint]" value="<%= h server['vpnEndpoint'] %>" size="30" />
+     <em class="info"><%= l(:text_multirdp_vpn_endpoint_info) %></em></p>
+  <p><button type="button" class="multirdp-remove-row icon icon-del"><%= sprite_icon('del', l(:button_delete)) %></button></p>
+</div>

@@ -1,0 +1,5 @@
+<%= l(:text_multirdp_mail_device_requested, name: @device.to_s, platform: @device.platform_label, version: @device.app_version, ip: @device.requested_ip) %>
+
+<%= l(:text_multirdp_mail_device_requested_hint, minutes: (MultirdpLicenses::PENDING_TTL / 60).to_i) %>
+
+<%= @approve_url %>

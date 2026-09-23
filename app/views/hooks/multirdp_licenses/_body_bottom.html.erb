@@ -1,0 +1,26 @@
+<% if User.current.logged? && !(controller_name == 'multirdp_my_licenses') %>
+  <% pending = MultirdpDevice.joins(:grant).where(multirdp_grants: { user_id: User.current.id }).pending_open.sorted.to_a %>
+  <% if pending.any? %>
+    <div id="multirdp-approval" class="multirdp-approval" role="dialog" aria-labelledby="multirdp-approval-title">
+      <h3 id="multirdp-approval-title"><%= l(:label_multirdp_approval_title) %></h3>
+      <% pending.each do |device| %>
+        <div class="multirdp-approval-request">
+          <p>
+            <%= l(:text_multirdp_approval_request,
+                  name: content_tag(:strong, device.to_s),
+                  platform: h(device.platform_label),
+                  version: h(device.app_version)).html_safe %>
+          </p>
+          <p class="multirdp-approval-meta">
+            <%= l(:text_multirdp_approval_requested, time: distance_of_time_in_words(Time.now, device.requested_at), ip: h(device.requested_ip)) %>
+          </p>
+          <p class="multirdp-approval-actions">
+            <%= button_to l(:button_multirdp_approve), approve_my_license_device_path(device), method: :post, class: 'multirdp-approve' %>
+            <%= button_to l(:button_multirdp_deny), deny_my_license_device_path(device), method: :post, class: 'multirdp-deny' %>
+          </p>
+        </div>
+      <% end %>
+      <p class="multirdp-approval-link"><%= link_to l(:label_multirdp_my_licenses), my_licenses_path %></p>
+    </div>
+  <% end %>
+<% end %>

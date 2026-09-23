@@ -1,0 +1,29 @@
+<% p = "license[apps][#{index}]" %>
+<div class="multirdp-app-row box tabular">
+  <input type="hidden" name="<%= p %>[id]" value="<%= h app['id'] %>" />
+  <p><label><%= l(:field_multirdp_server) %> <span class="required">*</span></label>
+     <select name="<%= p %>[serverId]" class="multirdp-app-server" data-selected="<%= h app['serverId'] %>">
+       <% @license.servers.each do |s| %>
+         <option value="<%= h s['id'] %>" <%= 'selected' if s['id'] == app['serverId'] %>><%= h s['name'] %></option>
+       <% end %>
+     </select></p>
+  <p><label><%= l(:field_multirdp_app_name) %> <span class="required">*</span></label>
+     <input type="text" name="<%= p %>[name]" value="<%= h app['name'] %>" size="30" /></p>
+  <p><label><%= l(:field_multirdp_program) %> <span class="required">*</span></label>
+     <input type="text" name="<%= p %>[program]" value="<%= h app['program'] %>" size="60" /></p>
+  <p><label><%= l(:field_multirdp_arguments) %></label>
+     <input type="text" name="<%= p %>[arguments]" value="<%= h app['arguments'] %>" size="60" /></p>
+  <p><label><%= l(:field_multirdp_process_name) %></label>
+     <input type="text" name="<%= p %>[processName]" value="<%= h app['processName'] %>" size="30" /></p>
+  <p><label><%= l(:field_multirdp_known_application_ids) %></label>
+     <input type="text" name="<%= p %>[knownApplicationIds]" value="<%= h Array(app['knownApplicationIds']).join(', ') %>" size="60" />
+     <em class="info"><%= l(:text_multirdp_known_ids_info) %></em></p>
+  <p><label><%= l(:field_multirdp_icon) %></label>
+     <% if app['icon'].present? %>
+       <%= multirdp_icon_tag(app['icon'], size: 32) %>
+       <label class="inline"><input type="checkbox" name="<%= p %>[icon_remove]" value="1" /> <%= l(:button_multirdp_icon_remove) %></label>
+     <% end %>
+     <input type="file" name="<%= p %>[icon_file]" accept="image/png" />
+     <em class="info"><%= l(:text_multirdp_icon_info) %></em></p>
+  <p><button type="button" class="multirdp-remove-row icon icon-del"><%= sprite_icon('del', l(:button_delete)) %></button></p>
+</div>

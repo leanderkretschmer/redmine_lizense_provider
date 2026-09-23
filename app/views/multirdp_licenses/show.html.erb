@@ -1,0 +1,111 @@
+<div class="contextual">
+  <%= link_to sprite_icon('edit', l(:button_edit)), edit_multirdp_license_path(@license), class: 'icon icon-edit' %>
+  <%= link_to sprite_icon('del', l(:button_delete)), multirdp_license_path(@license), method: :delete,
+              data: { confirm: l(:text_are_you_sure) }, class: 'icon icon-del' %>
+</div>
+
+<h2><%= link_to l(:label_multirdp_licenses), multirdp_licenses_path %> &#187; <%= h @license.name %></h2>
+
+<% unless MultirdpLicenses::Encryption.ready? %>
+  <div class="flash warning"><%= l(:text_multirdp_encryption_missing, env: MultirdpLicenses::Encryption::ENV_NAME, file: MultirdpLicenses::Encryption.key_file_path) %></div>
+<% end %>
+
+<div class="splitcontent">
+<div class="splitcontentleft">
+  <div class="box">
+    <h3><%= l(:label_multirdp_data_legend) %></h3>
+    <ul>
+      <li><%= l(:field_multirdp_kind) %>: <%= h @license.kind_label %></li>
+      <li><%= l(:field_multirdp_revision) %>: <%= @license.revision %></li>
+      <li><%= l(:field_multirdp_grace_days) %>: <%= multirdp_grace_days_label(@license) %></li>
+      <li><%= l(:field_author) %>: <%= @license.created_by ? link_to_user(@license.created_by) : '-' %></li>
+      <li><%= l(:field_updated_on) %>: <%= format_time(@license.updated_at) %></li>
+    </ul>
+    <% if @license.notes.present? %><p><%= simple_format(h(@license.notes)) %></p><% end %>
+
+    <h4><%= l(:label_multirdp_server_plural) %> (<%= @license.servers.size %>)</h4>
+    <% @license.servers.each do |server| %>
+      <p><strong><%= h server['name'] %></strong> &mdash; <%= h server['host'] %>:<%= server['port'].to_i.zero? ? 3389 : server['port'] %>
+         <% if server['username'].present? %>, <%= h server['username'] %><% end %>
+         <% if server['domain'].present? %>@<%= h server['domain'] %><% end %>
+         , VPN: <%= multirdp_vpn_mode_label(server['vpnMode']) %><% if server['vpnEndpoint'].present? %> (<%= h server['vpnEndpoint'] %>)<% end %>
+         <br /><small class="multirdp-uuid"><%= h server['id'] %></small></p>
+      <ul>
+        <% @license.apps_for(server['id']).each do |app| %>
+          <li><%= multirdp_icon_tag(app['icon']) %> <%= h app['name'] %> <small><%= h app['program'] %></small></li>
+        <% end %>
+      </ul>
+    <% end %>
+    <p><%= link_to l(:label_multirdp_show_json), data_multirdp_license_path(@license), target: '_blank' %></p>
+  </div>
+</div>
+
+<div class="splitcontentright">
+  <div class="box">
+    <h3><%= l(:label_multirdp_grant_add) %></h3>
+    <%= form_tag multirdp_license_path(@license), method: :get do %>
+      <p><%= text_field_tag 'q', @user_query, size: 30, placeholder: l(:label_multirdp_user_search) %>
+         <%= submit_tag l(:button_multirdp_search), name: nil %></p>
+    <% end %>
+    <% if @user_query.present? %>
+      <% if @candidates.empty? %>
+        <p class="nodata"><%= l(:label_no_data) %></p>
+      <% else %>
+        <%= form_tag multirdp_license_grants_path(@license), method: :post, id: 'multirdp-grant-form' do %>
+          <ul class="multirdp-candidates">
+            <% @candidates.each do |user| %>
+              <li><label><%= check_box_tag 'user_ids[]', user.id, false, id: "user_ids_#{user.id}" %> <%= h user.name %> (<%= h user.login %>)</label></li>
+            <% end %>
+          </ul>
+          <p><label for="valid_until"><%= l(:field_multirdp_valid_until) %></label>
+             <%= date_field_tag 'valid_until', nil, size: 12 %> <em class="info"><%= l(:text_multirdp_valid_until_info) %></em></p>
+          <p><%= submit_tag l(:button_multirdp_grant) %></p>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+</div>
+
+<h3><%= l(:label_multirdp_grant_plural) %> (<%= @grants.size %>)</h3>
+<% if @grants.empty? %>
+  <p class="nodata"><%= l(:label_no_data) %></p>
+<% else %>
+  <table class="list">
+    <thead><tr>
+      <th><%= l(:label_user) %></th>
+      <th><%= l(:field_status) %></th>
+      <th><%= l(:field_multirdp_valid_until) %></th>
+      <th><%= l(:label_multirdp_device_plural) %></th>
+      <th><%= l(:label_multirdp_vpn_config) %></th>
+      <th><%= l(:field_multirdp_settings_revision) %></th>
+      <th></th>
+    </tr></thead>
+    <tbody>
+    <% @grants.each do |grant| %>
+      <tr class="<%= cycle('odd', 'even') %>">
+        <td><%= link_to_user grant.user %></td>
+        <td><%= multirdp_grant_status_tag(grant) %></td>
+        <td><%= grant.valid_until ? format_date(grant.valid_until) : l(:label_multirdp_unlimited) %></td>
+        <td><%= grant.devices.count { |d| d.approved? } %> / <%= grant.devices.size %></td>
+        <td><%= multirdp_secret_summary(grant) %></td>
+        <td><%= grant.settings_revision %></td>
+        <td class="buttons">
+          <%= link_to sprite_icon('edit', l(:button_multirdp_manage)), multirdp_grant_path(grant), class: 'icon icon-edit' %>
+          <% if grant.status == MultirdpGrant::STATUS_ACTIVE %>
+            <%= link_to sprite_icon('lock', l(:button_multirdp_suspend)), multirdp_grant_path(grant, grant: { status: 'suspended' }), method: :patch, class: 'icon icon-lock' %>
+          <% elsif grant.status == MultirdpGrant::STATUS_SUSPENDED %>
+            <%= link_to sprite_icon('unlock', l(:button_multirdp_reactivate)), multirdp_grant_path(grant, grant: { status: 'active' }), method: :patch, class: 'icon icon-unlock' %>
+          <% end %>
+          <% unless grant.status == MultirdpGrant::STATUS_REVOKED %>
+            <%= link_to sprite_icon('cancel', l(:button_multirdp_revoke)), multirdp_grant_path(grant, grant: { status: 'revoked' }), method: :patch,
+                        data: { confirm: l(:text_are_you_sure) }, class: 'icon icon-cancel' %>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+<% html_title l(:label_administration), l(:label_multirdp_licenses), @license.name %>

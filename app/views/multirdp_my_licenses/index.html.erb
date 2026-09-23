@@ -1,0 +1,90 @@
+<h2><%= l(:label_multirdp_my_licenses) %></h2>
+
+<% if @pending_devices.any? %>
+  <div class="box multirdp-pending-box">
+    <h3><%= l(:label_multirdp_pending_requests) %></h3>
+    <table class="list">
+      <thead><tr>
+        <th><%= l(:field_multirdp_device_name) %></th>
+        <th><%= l(:field_multirdp_platform) %></th>
+        <th><%= l(:field_multirdp_app_version) %></th>
+        <th><%= l(:field_multirdp_requested_at) %></th>
+        <th><%= l(:field_multirdp_requested_ip) %></th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+      <% @pending_devices.each do |device| %>
+        <tr>
+          <td><%= h device.to_s %></td>
+          <td><%= multirdp_platform_label(device.platform) %></td>
+          <td><%= h device.app_version %></td>
+          <td><%= multirdp_time_ago(device.requested_at) %></td>
+          <td><%= h device.requested_ip %></td>
+          <td class="buttons">
+            <%= button_to l(:button_multirdp_approve), approve_my_license_device_path(device), method: :post, class: 'multirdp-approve' %>
+            <%= button_to l(:button_multirdp_deny), deny_my_license_device_path(device), method: :post, class: 'multirdp-deny' %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<% if @grants.empty? %>
+  <p class="nodata"><%= l(:label_multirdp_no_licenses) %></p>
+<% end %>
+
+<% @grants.each do |grant| %>
+  <% license = grant.license %>
+  <div class="box multirdp-grant">
+    <h3><%= h license.name %> <%= multirdp_grant_status_tag(grant) %></h3>
+    <ul>
+      <li><%= l(:field_multirdp_kind) %>: <%= h license.kind_label %></li>
+      <li><%= l(:field_multirdp_valid_until) %>: <%= grant.valid_until ? format_date(grant.valid_until) : l(:label_multirdp_unlimited) %></li>
+      <li><%= l(:field_multirdp_grace_days) %>: <%= multirdp_grace_days_label(license) %></li>
+      <li><%= l(:label_multirdp_server_plural) %>: <%= license.servers.size %>,
+          <%= l(:label_multirdp_app_plural) %>: <%= license.apps.size %>,
+          <%= l(:label_multirdp_vpn_config) %>: <%= multirdp_secret_summary(grant) %></li>
+      <li><%= l(:label_multirdp_last_synced) %>: <%= grant.last_synced_at ? format_time(grant.last_synced_at) : l(:label_multirdp_never) %></li>
+    </ul>
+
+    <h4><%= l(:label_multirdp_my_devices) %></h4>
+    <% devices = grant.devices.sorted.reject(&:pending_open?) %>
+    <% if devices.empty? %>
+      <p class="nodata"><%= l(:label_multirdp_no_devices) %></p>
+    <% else %>
+      <table class="list">
+        <thead><tr>
+          <th><%= l(:field_multirdp_device_name) %></th>
+          <th><%= l(:field_multirdp_platform) %></th>
+          <th><%= l(:field_multirdp_app_version) %></th>
+          <th><%= l(:field_multirdp_last_seen_at) %></th>
+          <th><%= l(:field_multirdp_last_seen_ip) %></th>
+          <th><%= l(:field_status) %></th>
+          <th></th>
+        </tr></thead>
+        <tbody>
+        <% devices.each do |device| %>
+          <tr class="<%= cycle('odd', 'even') %>">
+            <td><%= h device.to_s %></td>
+            <td><%= multirdp_platform_label(device.platform) %></td>
+            <td><%= h device.app_version %></td>
+            <td><%= device.last_seen_at ? format_time(device.last_seen_at) : '-' %></td>
+            <td><%= h device.last_seen_ip %></td>
+            <td><%= multirdp_device_status_tag(device) %></td>
+            <td class="buttons">
+              <% if device.approved? %>
+                <%= button_to l(:button_multirdp_revoke_device), revoke_my_license_device_path(device), method: :post,
+                              class: 'multirdp-deny', data: { confirm: l(:text_are_you_sure) } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+<% end %>
+
+<% html_title l(:label_multirdp_my_licenses) %>
