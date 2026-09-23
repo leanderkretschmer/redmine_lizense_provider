@@ -81,6 +81,27 @@ class MultirdpGrantTest < ActiveSupport::TestCase
     assert_nil grant.reload.secret_for(SERVER_ID)
   end
 
+  def test_rdp_password_stored_encrypted_and_independent_of_wireguard
+    grant = create_grant(@license, @user)
+    grant.store_rdp_password!(SERVER_ID, 'Geheim#2026')
+    raw = MultirdpGrant.connection.select_value("SELECT secrets FROM multirdp_grants WHERE id = #{grant.id}")
+    assert_not_includes raw, 'Geheim#2026'
+    assert_equal 'Geheim#2026', grant.reload.rdp_password_for(SERVER_ID)
+    assert_equal [SERVER_ID], grant.rdp_password_server_ids
+    assert_equal [], grant.secret_server_ids, 'Kennwort darf nicht als VPN-Konfiguration zählen'
+
+    grant.store_secret!(SERVER_ID, "[Interface]\nPrivateKey = X==\n")
+    assert_equal [SERVER_ID], grant.reload.secret_server_ids
+    assert_equal 'Geheim#2026', grant.rdp_password_for(SERVER_ID)
+
+    assert grant.delete_secret!(SERVER_ID)
+    assert_equal 'Geheim#2026', grant.reload.rdp_password_for(SERVER_ID)
+    assert grant.delete_rdp_password!(SERVER_ID)
+    assert_nil grant.reload.rdp_password_for(SERVER_ID)
+    assert_nil grant.secrets
+    assert_not grant.delete_rdp_password!(SERVER_ID)
+  end
+
   def test_events_are_append_only
     grant = create_grant(@license, @user)
     event = MultirdpEvent.record!(MultirdpEvent::GRANT_CREATED, grant: grant, user: @user, ip: '1.2.3.4')

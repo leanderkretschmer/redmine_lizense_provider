@@ -64,6 +64,26 @@ class MultirdpGrantsControllerTest < Redmine::ControllerTest
     assert_nil grant.reload.secret_for(SERVER_ID)
   end
 
+  def test_store_and_delete_rdp_password_never_shown
+    grant = create_grant(@license, User.find(2))
+    post :store_rdp_password, params: { id: grant.id, server_id: SERVER_ID, rdp_password: 'RdpGeheim!' }
+    assert_redirected_to multirdp_grant_path(grant)
+    assert_equal 'RdpGeheim!', grant.reload.rdp_password_for(SERVER_ID)
+    assert_equal 1, MultirdpEvent.where(action: 'rdp_password_stored').count
+    assert_no_match(/RdpGeheim/, MultirdpEvent.last.detail.to_s)
+
+    get :show, params: { id: grant.id }
+    assert_response :success
+    assert_no_match(/RdpGeheim/, response.body)
+    assert_select '.multirdp-rdp-password', /hinterlegt|stored/
+
+    post :store_rdp_password, params: { id: grant.id, server_id: SERVER_ID, rdp_password: '' }
+    assert_equal 'RdpGeheim!', grant.reload.rdp_password_for(SERVER_ID)
+
+    delete :delete_rdp_password, params: { id: grant.id, server_id: SERVER_ID }
+    assert_nil grant.reload.rdp_password_for(SERVER_ID)
+  end
+
   def test_store_secret_for_unknown_server
     grant = create_grant(@license, User.find(2))
     post :store_secret, params: { id: grant.id, server_id: 'ffffffff-0000-0000-0000-000000000000', wireguard_config: 'x' }

@@ -54,7 +54,7 @@ Redmine::Plugin.register :redmine_lizense_provider do
 end
 
 # Token und Geheimnisse dürfen in keinem Protokoll auftauchen.
-Rails.application.config.filter_parameters += [:token, :password, :secrets, :config, :wireguard_config]
+Rails.application.config.filter_parameters += [:token, :password, :secrets, :config, :wireguard_config, :rdp_password]
 
 # Verschlüsselung der WireGuard-Konfigurationen (ActiveRecord::Encryption).
 # Idempotent; der Schlüssel kommt aus ENV MULTIRDP_KEY oder config/multirdp_key.

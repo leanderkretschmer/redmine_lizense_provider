@@ -18,6 +18,9 @@ class MultirdpEvent < ActiveRecord::Base
   SECRET_STORED    = 'secret_stored'
   SECRET_DELETED   = 'secret_deleted'
   SECRET_FETCHED   = 'secret_fetched'
+  RDP_PASSWORD_STORED  = 'rdp_password_stored'
+  RDP_PASSWORD_DELETED = 'rdp_password_deleted'
+  RDP_PASSWORD_FETCHED = 'rdp_password_fetched'
   LOGIN_ATTEMPT    = 'login_attempt'
   SESSION_ENDED    = 'session_ended'
 
@@ -26,6 +29,7 @@ class MultirdpEvent < ActiveRecord::Base
     GRANT_CREATED, GRANT_UPDATED, GRANT_REVOKED, GRANT_DELETED,
     DEVICE_REQUESTED, DEVICE_APPROVED, DEVICE_DENIED, DEVICE_EXPIRED, DEVICE_REVOKED,
     SETTINGS_WRITTEN, SECRET_STORED, SECRET_DELETED, SECRET_FETCHED,
+    RDP_PASSWORD_STORED, RDP_PASSWORD_DELETED, RDP_PASSWORD_FETCHED,
     LOGIN_ATTEMPT, SESSION_ENDED
   ].freeze
 

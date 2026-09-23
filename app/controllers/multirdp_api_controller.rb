@@ -16,7 +16,7 @@ class MultirdpApiController < ApplicationController
   before_action :require_https
   before_action :reset_current_user
   before_action :authenticate_device, except: [:create_session]
-  before_action :require_usable_grant, only: [:show_license, :update_settings, :update_data, :show_secret]
+  before_action :require_usable_grant, only: [:show_license, :update_settings, :update_data, :show_secret, :show_rdp_password]
 
   rescue_from ActionController::ParameterMissing do |e|
     api_error(400, 'ungueltige_anfrage', parameter: e.param.to_s)
@@ -89,7 +89,8 @@ class MultirdpApiController < ApplicationController
       grace_days: license.grace_days,
       data: license.data,
       settings: @grant.settings,
-      secrets_available: @grant.secret_server_ids
+      secrets_available: @grant.secret_server_ids,
+      rdp_passwords_available: @grant.rdp_password_server_ids
     }
   end
 
@@ -135,6 +136,18 @@ class MultirdpApiController < ApplicationController
                           ip: request.remote_ip, detail: "server_id=#{server_id}")
     response.headers['Cache-Control'] = 'no-store'
     render plain: config, content_type: 'text/plain; charset=utf-8'
+  end
+
+  # GET /multirdp/api/v1/secrets/:server_id/rdp — RDP-Kennwort des Servers (Erweiterung, siehe README).
+  def show_rdp_password
+    server_id = params[:server_id].to_s.downcase
+    password = @grant.rdp_password_for(server_id)
+    return api_error(404, 'kein_geheimnis') if password.nil?
+
+    MultirdpEvent.record!(MultirdpEvent::RDP_PASSWORD_FETCHED, user: @grant.user, grant: @grant, device: @device,
+                          ip: request.remote_ip, detail: "server_id=#{server_id}")
+    response.headers['Cache-Control'] = 'no-store'
+    render json: { server_id: server_id, password: password }
   end
 
   private

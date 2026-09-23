@@ -10,6 +10,7 @@ RedmineApp::Application.routes.draw do
     patch  'settings',           action: 'update_settings'
     match  'data',               action: 'update_data',     via: [:put, :patch, :post, :delete], as: 'multirdp_api_data'
     get    'secrets/:server_id', action: 'show_secret',     as: 'multirdp_api_secret'
+    get    'secrets/:server_id/rdp', action: 'show_rdp_password', as: 'multirdp_api_rdp_password'
   end
 
   # ---- "Mein Konto" → Lizenzen (Abschnitt 11) ----------------------------
@@ -30,6 +31,8 @@ RedmineApp::Application.routes.draw do
       member do
         post   'secrets',            action: 'store_secret',  as: 'secrets'
         delete 'secrets/:server_id', action: 'delete_secret', as: 'secret'
+        post   'rdp_password',            action: 'store_rdp_password',  as: 'rdp_password'
+        delete 'rdp_password/:server_id', action: 'delete_rdp_password', as: 'rdp_password_for'
       end
     end
     post 'devices/:id/revoke', to: 'multirdp_grants#revoke_device', as: 'revoke_multirdp_device'

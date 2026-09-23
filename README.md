@@ -113,9 +113,9 @@ test/                            Unit-, Funktions- und Integrationstests
 
 | Zweck | Route |
 |---|---|
-| Client-Schnittstelle | `POST/DELETE /multirdp/api/v1/session`, `GET /multirdp/api/v1/license`, `PUT /multirdp/api/v1/settings`, `GET /multirdp/api/v1/secrets/:server_id`; `PUT/PATCH/POST/DELETE /multirdp/api/v1/data` → immer 403 |
+| Client-Schnittstelle | `POST/DELETE /multirdp/api/v1/session`, `GET /multirdp/api/v1/license`, `PUT /multirdp/api/v1/settings`, `GET /multirdp/api/v1/secrets/:server_id`, `GET /multirdp/api/v1/secrets/:server_id/rdp`; `PUT/PATCH/POST/DELETE /multirdp/api/v1/data` → immer 403 |
 | Mein Konto | `GET /my/licenses`; `POST /my/licenses/devices/:id/{approve,deny,revoke}` |
-| Verwaltung | `resources /admin/multirdp/licenses` (+ `GET …/:id/data` = JSON-Ansicht), `POST /admin/multirdp/licenses/:license_id/grants` (mehrere Benutzer), `GET/PATCH/DELETE /admin/multirdp/grants/:id`, `POST …/grants/:id/secrets`, `DELETE …/grants/:id/secrets/:server_id`, `POST /admin/multirdp/devices/:id/revoke` |
+| Verwaltung | `resources /admin/multirdp/licenses` (+ `GET …/:id/data` = JSON-Ansicht), `POST /admin/multirdp/licenses/:license_id/grants` (mehrere Benutzer), `GET/PATCH/DELETE /admin/multirdp/grants/:id`, `POST …/grants/:id/secrets`, `DELETE …/grants/:id/secrets/:server_id`, `POST …/grants/:id/rdp_password`, `DELETE …/grants/:id/rdp_password/:server_id`, `POST /admin/multirdp/devices/:id/revoke` |
 
 Alle Verwaltungs- und Benutzer-Routen laufen über Redmines Sitzung mit CSRF-Schutz;
 Freigeben/Ablehnen/Sperren sind ausschließlich `POST`. Die Schnittstelle ist von
@@ -207,9 +207,9 @@ Anmeldung erreichbar ist) übernimmt diese Rolle.
 `multirdp_events` ist nur anhängbar (`readonly?` nach dem Anlegen). Protokolliert werden:
 Lizenz angelegt/geändert/gelöscht, Zuteilung erteilt/geändert/entzogen/gelöscht, Gerät
 angefragt/freigegeben/abgelehnt/abgelaufen/gesperrt, Einstellungen geschrieben,
-VPN-Konfiguration hinterlegt/gelöscht/**abgerufen** (mit Gerät, Zeit, IP, Server-ID),
+VPN-Konfiguration und RDP-Kennwort hinterlegt/gelöscht/**abgerufen** (mit Gerät, Zeit, IP, Server-ID),
 Anmeldeversuch, Abmeldung. Kein Eintrag enthält Kennwörter, Token oder
-Konfigurationsinhalte; `password`, `token`, `secrets`, `wireguard_config` sind zusätzlich
+Konfigurationsinhalte; `password`, `token`, `secrets`, `wireguard_config`, `rdp_password` sind zusätzlich
 in `filter_parameters` eingetragen.
 
 ### Mail
@@ -219,10 +219,30 @@ Ein fehlgeschlagener Versand bricht die Anmeldung nicht ab.
 
 ---
 
+## RDP-Kennwörter (Entscheidung des Auftraggebers vom 2026-09-23)
+
+Abweichend von Abschnitt 9 der Vorgabe hat der Auftraggeber entschieden, dass der
+**Administrator je Zuteilung und Server ein RDP-Kennwort hinterlegt**. Umsetzung wie bei
+der WireGuard-Konfiguration: verschlüsselt in `multirdp_grants.secrets`, in der
+Oberfläche nie sichtbar (nur „hinterlegt, zuletzt geändert am …“, Ersetzen, Löschen),
+Auslieferung nur an freigegebene Geräte, jeder Abruf im Protokoll
+(`rdp_password_fetched` mit Gerät, Zeit, IP, Server-ID).
+
+Erweiterung der Schnittstelle (muss der Client nachziehen):
+
+- `GET /license` liefert zusätzlich `rdp_passwords_available: ["<server_id>", …]`.
+- `GET /multirdp/api/v1/secrets/:server_id/rdp` liefert `{"server_id": "…", "password": "…"}`
+  (`Cache-Control: no-store`); ohne hinterlegtes Kennwort `404 {"error":"kein_geheimnis"}`.
+  Dieselben 403-Gründe wie bei `GET /license`.
+
+Damit ist Redmine ein Kennwortspeicher für RDP-Konten: Jedes freigegebene Gerät kann die
+Kennwörter abrufen, ein entwendetes Gerätetoken reicht dafür. Verlorene Geräte deshalb
+sofort sperren (Mein Konto → Lizenzen → Sperren); der Abruf ist im Protokoll nachvollziehbar.
+
 ## Was nicht synchronisiert wird (Abschnitt 9)
 
-RDP-Kennwörter, Pfade freigegebener Ordner, installierte Verknüpfungen und gelernte
-Fenster-Zuordnungen — absichtlich nicht, siehe Vorgabe. Nicht stillschweigend nachbauen.
+Pfade freigegebener Ordner, installierte Verknüpfungen und gelernte Fenster-Zuordnungen —
+absichtlich nicht, siehe Vorgabe. Nicht stillschweigend nachbauen.
 
 ---
 
@@ -258,8 +278,8 @@ kopiert und die Testgruppe im Container nachinstalliert.
 2. **Weg B (Schlüsselpaar je Gerät):** vorbereitet (`public_key` je Gerät, Anzeige beim
    Administrator, optionales Feld `device.public_key` in `POST /session`). Der Umstieg
    ohne Schema-Änderung ist möglich; ob und wann, ist zu entscheiden.
-3. **RDP-Kennwörter** werden nicht synchronisiert (Abschnitt 9). Falls doch gewünscht:
-   eigene Entscheidung mit eigener Prüfung.
+3. **RDP-Kennwörter**: entschieden am 2026-09-23 (Administrator hinterlegt sie), siehe oben.
+   Der Client muss den neuen Endpunkt `GET /secrets/:server_id/rdp` umsetzen.
 4. **`mac/RRConfig.h`** war in dieser Umgebung nicht vorhanden; die Felder wurden
    eins zu eins aus Abschnitt 5 der Vorgabe übernommen. Abweichungen im Modell der App
    bitte melden, nicht raten.

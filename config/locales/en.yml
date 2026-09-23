@@ -65,6 +65,13 @@ en:
   label_multirdp_event_secret_stored: "VPN configuration stored"
   label_multirdp_event_secret_deleted: "VPN configuration deleted"
   label_multirdp_event_secret_fetched: "VPN configuration fetched"
+  label_multirdp_event_rdp_password_stored: "RDP password stored"
+  label_multirdp_event_rdp_password_deleted: "RDP password deleted"
+  label_multirdp_event_rdp_password_fetched: "RDP password fetched"
+  label_multirdp_rdp_password: "RDP password"
+  label_multirdp_rdp_password_count:
+    one: "stored (1 server)"
+    other: "stored (%{count} servers)"
   label_multirdp_event_login_attempt: "Login attempt"
   label_multirdp_event_session_ended: "Signed out"
 
@@ -139,6 +146,9 @@ en:
     one: "1 grant issued."
     other: "%{count} grants issued."
   notice_multirdp_secret_stored: "VPN configuration stored."
+  notice_multirdp_rdp_password_stored: "RDP password stored."
+  error_multirdp_rdp_password_invalid: "The password is empty or longer than 255 bytes."
+  text_multirdp_rdp_password_info: "Password of the RDP user account per server. Stored encrypted, never shown here, delivered only to approved devices; every fetch is logged. Leave empty if the user enters it on the device."
   error_multirdp_device_not_pending: "This request is no longer open (expired or already decided)."
   error_multirdp_unknown_server: "Unknown server."
   error_multirdp_secret_invalid: "The configuration is empty or too large (at most 64 KiB)."

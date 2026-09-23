@@ -7,7 +7,7 @@ class MultirdpGrantsController < ApplicationController
 
   before_action :require_admin
   before_action :find_license, only: [:create]
-  before_action :find_grant, only: [:show, :update, :destroy, :store_secret, :delete_secret]
+  before_action :find_grant, only: [:show, :update, :destroy, :store_secret, :delete_secret, :store_rdp_password, :delete_rdp_password]
   before_action :find_device, only: [:revoke_device]
 
   helper :multirdp_licenses
@@ -97,6 +97,39 @@ class MultirdpGrantsController < ApplicationController
     server_id = params[:server_id].to_s.downcase
     if @grant.delete_secret!(server_id)
       MultirdpEvent.record!(MultirdpEvent::SECRET_DELETED, grant: @grant, ip: request.remote_ip, detail: "server_id=#{server_id}")
+      flash[:notice] = l(:notice_successful_delete)
+    end
+    redirect_to multirdp_grant_path(@grant)
+  end
+
+  # POST /admin/multirdp/grants/:id/rdp_password — RDP-Kennwort je Server hinterlegen oder ersetzen.
+  def store_rdp_password
+    server_id = params[:server_id].to_s.downcase
+    unless @grant.license.server(server_id)
+      flash[:error] = l(:error_multirdp_unknown_server)
+      return redirect_to multirdp_grant_path(@grant)
+    end
+
+    password = params[:rdp_password].to_s
+    if password.empty? || password.bytesize > 255
+      flash[:error] = l(:error_multirdp_rdp_password_invalid)
+      return redirect_to multirdp_grant_path(@grant)
+    end
+
+    @grant.store_rdp_password!(server_id, password)
+    MultirdpEvent.record!(MultirdpEvent::RDP_PASSWORD_STORED, grant: @grant, ip: request.remote_ip, detail: "server_id=#{server_id}")
+    flash[:notice] = l(:notice_multirdp_rdp_password_stored)
+    redirect_to multirdp_grant_path(@grant)
+  rescue MultirdpLicenses::EncryptionUnavailable
+    flash[:error] = l(:error_multirdp_encryption_unavailable)
+    redirect_to multirdp_grant_path(@grant)
+  end
+
+  # DELETE /admin/multirdp/grants/:id/rdp_password/:server_id
+  def delete_rdp_password
+    server_id = params[:server_id].to_s.downcase
+    if @grant.delete_rdp_password!(server_id)
+      MultirdpEvent.record!(MultirdpEvent::RDP_PASSWORD_DELETED, grant: @grant, ip: request.remote_ip, detail: "server_id=#{server_id}")
       flash[:notice] = l(:notice_successful_delete)
     end
     redirect_to multirdp_grant_path(@grant)

@@ -96,8 +96,14 @@ class MultirdpGrant < ActiveRecord::Base
     {}
   end
 
+  # Server, für die eine WireGuard-Konfiguration vorliegt.
   def secret_server_ids
-    secrets_hash.keys
+    secrets_hash.select { |_, e| e.is_a?(Hash) && e['config'].present? }.keys
+  end
+
+  # Server, für die ein RDP-Kennwort vorliegt.
+  def rdp_password_server_ids
+    secrets_hash.select { |_, e| e.is_a?(Hash) && e['rdp_password'].present? }.keys
   end
 
   def secret_for(server_id)
@@ -114,17 +120,56 @@ class MultirdpGrant < ActiveRecord::Base
     raise MultirdpLicenses::EncryptionUnavailable unless MultirdpLicenses::Encryption.ready?
 
     hash = secrets_hash
-    hash[server_id.to_s] = { 'config' => config_text.to_s, 'updated_at' => Time.now.utc.iso8601 }
-    self.secrets = JSON.generate(hash)
-    save!
+    entry = hash[server_id.to_s].is_a?(Hash) ? hash[server_id.to_s] : {}
+    entry['config'] = config_text.to_s
+    entry['updated_at'] = Time.now.utc.iso8601
+    hash[server_id.to_s] = entry
+    write_secrets!(hash)
   end
 
   def delete_secret!(server_id)
     hash = secrets_hash
-    return false unless hash.delete(server_id.to_s)
+    entry = hash[server_id.to_s]
+    return false unless entry.is_a?(Hash) && entry.key?('config')
 
-    self.secrets = hash.empty? ? nil : JSON.generate(hash)
-    save!
+    entry.delete('config')
+    entry.delete('updated_at')
+    hash.delete(server_id.to_s) if entry.empty?
+    write_secrets!(hash)
+  end
+
+  # ---- RDP-Kennwörter (Entscheidung des Auftraggebers vom 2026-09-23) ----
+
+  def rdp_password_for(server_id)
+    entry = secrets_hash[server_id.to_s]
+    entry.is_a?(Hash) ? entry['rdp_password'] : nil
+  end
+
+  def rdp_password_updated_at(server_id)
+    entry = secrets_hash[server_id.to_s]
+    entry.is_a?(Hash) && entry['rdp_password_updated_at'] ? Time.zone.parse(entry['rdp_password_updated_at']) : nil
+  end
+
+  def store_rdp_password!(server_id, password)
+    raise MultirdpLicenses::EncryptionUnavailable unless MultirdpLicenses::Encryption.ready?
+
+    hash = secrets_hash
+    entry = hash[server_id.to_s].is_a?(Hash) ? hash[server_id.to_s] : {}
+    entry['rdp_password'] = password.to_s
+    entry['rdp_password_updated_at'] = Time.now.utc.iso8601
+    hash[server_id.to_s] = entry
+    write_secrets!(hash)
+  end
+
+  def delete_rdp_password!(server_id)
+    hash = secrets_hash
+    entry = hash[server_id.to_s]
+    return false unless entry.is_a?(Hash) && entry.key?('rdp_password')
+
+    entry.delete('rdp_password')
+    entry.delete('rdp_password_updated_at')
+    hash.delete(server_id.to_s) if entry.empty?
+    write_secrets!(hash)
   end
 
   def pending_devices
@@ -136,6 +181,11 @@ class MultirdpGrant < ActiveRecord::Base
   end
 
   private
+
+  def write_secrets!(hash)
+    self.secrets = hash.empty? ? nil : JSON.generate(hash)
+    save!
+  end
 
   def single_active_grant_per_user
     return unless status == STATUS_ACTIVE && !expired? && license

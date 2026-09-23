@@ -152,6 +152,33 @@ class MultirdpApiTest < Redmine::IntegrationTest
     assert_response 404
   end
 
+  def test_rdp_password_endpoint
+    token = login_and_approve
+    device = MultirdpDevice.authenticate(token)
+    get "/multirdp/api/v1/secrets/#{SERVER_ID}/rdp", headers: auth(token)
+    assert_response 404
+    assert_equal 'kein_geheimnis', json['error']
+
+    @grant.store_rdp_password!(SERVER_ID, 'RdpGeheim!')
+    get '/multirdp/api/v1/license', headers: auth(token)
+    assert_equal [SERVER_ID], json['rdp_passwords_available']
+    assert_equal [], json['secrets_available']
+    assert_no_match(/RdpGeheim/, response.body)
+
+    get "/multirdp/api/v1/secrets/#{SERVER_ID}/rdp", headers: auth(token)
+    assert_response :success
+    assert_equal 'RdpGeheim!', json['password']
+    assert_equal 'no-store', response.headers['Cache-Control']
+    event = MultirdpEvent.where(action: 'rdp_password_fetched', device_id: device.id).last
+    assert event
+    assert_no_match(/RdpGeheim/, event.detail)
+
+    device.revoke!
+    get "/multirdp/api/v1/secrets/#{SERVER_ID}/rdp", headers: auth(token)
+    assert_response 403
+    assert_equal 'geraet_gesperrt', json['error']
+  end
+
   # Abnahme 5
   def test_settings_write_and_conflict
     token = login_and_approve
@@ -304,8 +331,10 @@ class MultirdpApiTest < Redmine::IntegrationTest
   # Abnahme 10
   def test_database_contains_no_plaintext_secret
     @grant.store_secret!(SERVER_ID, "[Interface]\nPrivateKey = PLAINTEXTKEY==\n")
+    @grant.store_rdp_password!(SERVER_ID, 'PLAINTEXTRDP')
     raw = ActiveRecord::Base.connection.select_value("SELECT secrets FROM multirdp_grants WHERE id = #{@grant.id}")
     assert_not_includes raw.to_s, 'PLAINTEXTKEY'
+    assert_not_includes raw.to_s, 'PLAINTEXTRDP'
     assert_equal 0, MultirdpEvent.where('detail LIKE ?', '%PLAINTEXTKEY%').count
   end
 end

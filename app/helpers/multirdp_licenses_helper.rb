@@ -39,6 +39,14 @@ module MultirdpLicensesHelper
     l(:label_multirdp_grace_days_value, count: license.grace_days)
   end
 
+  # Zeigt nur, ob RDP-Kennwörter hinterlegt sind — nie den Inhalt.
+  def multirdp_rdp_password_summary(grant)
+    ids = grant.rdp_password_server_ids
+    return l(:label_multirdp_secret_none) if ids.empty?
+
+    l(:label_multirdp_rdp_password_count, count: ids.size)
+  end
+
   # Zeigt nur, ob eine VPN-Konfiguration hinterlegt ist — nie den Inhalt.
   def multirdp_secret_summary(grant)
     ids = grant.secret_server_ids

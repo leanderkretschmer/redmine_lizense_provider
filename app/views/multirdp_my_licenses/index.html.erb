@@ -45,7 +45,8 @@
       <li><%= l(:field_multirdp_grace_days) %>: <%= multirdp_grace_days_label(license) %></li>
       <li><%= l(:label_multirdp_server_plural) %>: <%= license.servers.size %>,
           <%= l(:label_multirdp_app_plural) %>: <%= license.apps.size %>,
-          <%= l(:label_multirdp_vpn_config) %>: <%= multirdp_secret_summary(grant) %></li>
+          <%= l(:label_multirdp_vpn_config) %>: <%= multirdp_secret_summary(grant) %>,
+          <%= l(:label_multirdp_rdp_password) %>: <%= multirdp_rdp_password_summary(grant) %></li>
       <li><%= l(:label_multirdp_last_synced) %>: <%= grant.last_synced_at ? format_time(grant.last_synced_at) : l(:label_multirdp_never) %></li>
     </ul>
 

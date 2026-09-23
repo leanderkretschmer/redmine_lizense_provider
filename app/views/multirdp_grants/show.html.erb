@@ -47,6 +47,34 @@
       </div>
     <% end %>
   </div>
+
+  <div class="box">
+    <h3><%= l(:label_multirdp_rdp_password) %></h3>
+    <p class="info"><%= l(:text_multirdp_rdp_password_info) %></p>
+    <% if @license.servers.empty? %>
+      <p class="nodata"><%= l(:label_multirdp_no_servers) %></p>
+    <% end %>
+    <% @license.servers.each do |server| %>
+      <% pw_at = @grant.rdp_password_updated_at(server['id']) %>
+      <div class="multirdp-secret multirdp-rdp-password">
+        <p><strong><%= h server['name'] %></strong>
+          <% if server['username'].present? %>(<%= h server['username'] %><% if server['domain'].present? %>@<%= h server['domain'] %><% end %>)<% end %>
+          <% if pw_at %>
+            &mdash; <%= l(:label_multirdp_secret_stored_at, time: format_time(pw_at)) %>
+            <%= link_to sprite_icon('del', l(:button_delete)), rdp_password_for_multirdp_grant_path(@grant, server['id']), method: :delete,
+                        data: { confirm: l(:text_are_you_sure) }, class: 'icon icon-del' %>
+          <% else %>
+            &mdash; <%= l(:label_multirdp_secret_none) %>
+          <% end %>
+        </p>
+        <%= form_tag rdp_password_multirdp_grant_path(@grant), method: :post, class: 'multirdp-secret-form' do %>
+          <%= hidden_field_tag 'server_id', server['id'], id: nil %>
+          <p><%= password_field_tag 'rdp_password', nil, id: nil, size: 30, autocomplete: 'new-password' %>
+             <%= submit_tag(pw_at ? l(:button_multirdp_secret_replace) : l(:button_multirdp_secret_store), disabled: !@encryption_ready) %></p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
 </div>
 
 <div class="splitcontentright">

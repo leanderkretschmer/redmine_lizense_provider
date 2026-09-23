@@ -65,6 +65,13 @@ de:
   label_multirdp_event_secret_stored: "VPN-Konfiguration hinterlegt"
   label_multirdp_event_secret_deleted: "VPN-Konfiguration gelöscht"
   label_multirdp_event_secret_fetched: "VPN-Konfiguration abgerufen"
+  label_multirdp_event_rdp_password_stored: "RDP-Kennwort hinterlegt"
+  label_multirdp_event_rdp_password_deleted: "RDP-Kennwort gelöscht"
+  label_multirdp_event_rdp_password_fetched: "RDP-Kennwort abgerufen"
+  label_multirdp_rdp_password: "RDP-Kennwort"
+  label_multirdp_rdp_password_count:
+    one: "hinterlegt (1 Server)"
+    other: "hinterlegt (%{count} Server)"
   label_multirdp_event_login_attempt: "Anmeldeversuch"
   label_multirdp_event_session_ended: "Abgemeldet"
 
@@ -139,6 +146,9 @@ de:
     one: "1 Zuteilung erteilt."
     other: "%{count} Zuteilungen erteilt."
   notice_multirdp_secret_stored: "VPN-Konfiguration hinterlegt."
+  notice_multirdp_rdp_password_stored: "RDP-Kennwort hinterlegt."
+  error_multirdp_rdp_password_invalid: "Das Kennwort ist leer oder länger als 255 Byte."
+  text_multirdp_rdp_password_info: "Kennwort des RDP-Benutzerkontos je Server. Wird verschlüsselt gespeichert, hier nie angezeigt und nur an freigegebene Geräte ausgeliefert; jeder Abruf wird protokolliert. Leer lassen, wenn der Benutzer es auf dem Gerät selbst eingibt."
   error_multirdp_device_not_pending: "Diese Anfrage ist nicht mehr offen (abgelaufen oder bereits entschieden)."
   error_multirdp_unknown_server: "Unbekannter Server."
   error_multirdp_secret_invalid: "Die Konfiguration ist leer oder zu groß (höchstens 64 KiB)."
