@@ -4,9 +4,7 @@
 
 <h2><%= l(:label_multirdp_licenses) %></h2>
 
-<% unless MultirdpLicenses::Encryption.ready? %>
-  <div class="flash warning"><%= l(:text_multirdp_encryption_missing, env: MultirdpLicenses::Encryption::ENV_NAME, file: MultirdpLicenses::Encryption.key_file_path) %></div>
-<% end %>
+<%= multirdp_encryption_warning %>
 
 <% if @licenses.empty? %>
   <p class="nodata"><%= l(:label_no_data) %></p>

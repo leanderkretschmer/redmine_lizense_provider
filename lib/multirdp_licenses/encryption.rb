@@ -50,6 +50,13 @@ module MultirdpLicenses
         @configured_by_plugin == true
       end
 
+      # Warum kein Schlüssel vorliegt: :missing oder :too_short (nil, wenn alles gut ist).
+      def problem
+        return nil if ready?
+
+        @problem || :missing
+      end
+
       def key_file_path
         Rails.root.join('config', FILE_NAME)
       end
@@ -57,6 +64,7 @@ module MultirdpLicenses
       # Nur für Tests: Konfiguration zurücksetzen.
       def reset_for_tests!
         @configured_by_plugin = nil
+        @problem = nil
         cfg = ActiveRecord::Encryption.config
         cfg.primary_key = nil
         cfg.deterministic_key = nil
@@ -76,12 +84,17 @@ module MultirdpLicenses
         key = ENV[ENV_NAME].to_s.strip
         key = File.read(key_file_path).strip if key.empty? && File.readable?(key_file_path)
         key = TEST_KEY if key.empty? && Rails.env.test?
-        return nil if key.empty?
-
-        if key.length < MIN_KEY_LENGTH
-          Rails.logger.error("[redmine_lizense_provider] Verschlüsselungsschlüssel zu kurz (mindestens #{MIN_KEY_LENGTH} Zeichen).") if Rails.logger
+        if key.empty?
+          @problem = :missing
           return nil
         end
+
+        if key.length < MIN_KEY_LENGTH
+          @problem = :too_short
+          Rails.logger.error("[redmine_lizense_provider] Verschlüsselungsschlüssel zu kurz (#{key.length} Zeichen, mindestens #{MIN_KEY_LENGTH}).") if Rails.logger
+          return nil
+        end
+        @problem = nil
         key
       end
     end

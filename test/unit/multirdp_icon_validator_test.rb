@@ -2,6 +2,29 @@
 
 require File.expand_path('../test_helper', __dir__)
 
+class MultirdpEncryptionProblemTest < ActiveSupport::TestCase
+  def teardown
+    MultirdpLicenses::Encryption.reset_for_tests!
+    ENV.delete('MULTIRDP_KEY')
+    MultirdpLicenses::Encryption.configure!
+  end
+
+  def test_too_short_key_is_reported
+    MultirdpLicenses::Encryption.reset_for_tests!
+    ENV['MULTIRDP_KEY'] = 'kurz'
+    assert_not MultirdpLicenses::Encryption.configure!
+    assert_equal :too_short, MultirdpLicenses::Encryption.problem
+    assert_not MultirdpLicenses::Encryption.ready?
+  end
+
+  def test_valid_key_clears_problem
+    MultirdpLicenses::Encryption.reset_for_tests!
+    ENV['MULTIRDP_KEY'] = 'a' * 40
+    assert MultirdpLicenses::Encryption.configure!
+    assert_nil MultirdpLicenses::Encryption.problem
+  end
+end
+
 class MultirdpIconValidatorTest < ActiveSupport::TestCase
   include MultirdpTestHelper
 

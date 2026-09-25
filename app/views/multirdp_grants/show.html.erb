@@ -1,8 +1,6 @@
 <h2><%= link_to l(:label_multirdp_licenses), multirdp_licenses_path %> &#187; <%= link_to h(@license.name), multirdp_license_path(@license) %> &#187; <%= h @grant.user.name %></h2>
 
-<% unless @encryption_ready %>
-  <div class="flash warning"><%= l(:text_multirdp_encryption_missing, env: MultirdpLicenses::Encryption::ENV_NAME, file: MultirdpLicenses::Encryption.key_file_path) %></div>
-<% end %>
+<%= multirdp_encryption_warning %>
 
 <div class="splitcontent">
 <div class="splitcontentleft">

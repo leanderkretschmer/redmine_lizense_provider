@@ -39,6 +39,15 @@ module MultirdpLicensesHelper
     l(:label_multirdp_grace_days_value, count: license.grace_days)
   end
 
+  # Warnung in der Verwaltung, wenn nicht verschlüsselt werden kann.
+  def multirdp_encryption_warning
+    return '' if MultirdpLicenses::Encryption.ready?
+
+    key = MultirdpLicenses::Encryption.problem == :too_short ? :text_multirdp_encryption_too_short : :text_multirdp_encryption_missing
+    content_tag(:div, l(key, env: MultirdpLicenses::Encryption::ENV_NAME, file: MultirdpLicenses::Encryption.key_file_path,
+                            min: MultirdpLicenses::Encryption::MIN_KEY_LENGTH), class: 'flash warning')
+  end
+
   # Zeigt nur, ob RDP-Kennwörter hinterlegt sind — nie den Inhalt.
   def multirdp_rdp_password_summary(grant)
     ids = grant.rdp_password_server_ids
