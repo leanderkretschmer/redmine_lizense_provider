@@ -1,0 +1,20 @@
+<% enc = MultirdpLicenses::Encryption %>
+<%# Der in der Datenbank abgelegte Schlüssel wird unverändert zurückgeschrieben. %>
+<%= hidden_field_tag 'settings[encryption_key]', @settings['encryption_key'].to_s, id: 'settings_encryption_key' %>
+
+<p>
+  <label><%= l(:field_multirdp_encryption_key) %></label>
+  <% if enc.ready? && enc.current_key %>
+    <input type="text" readonly="readonly" value="<%= h enc.current_key %>" size="70" onclick="this.select();" />
+    <em class="info"><%= l(:"label_multirdp_key_source_#{enc.source}") %></em>
+  <% elsif enc.ready? %>
+    <em class="info"><%= l(:label_multirdp_key_source_host) %></em>
+  <% else %>
+    <span class="flash error"><%= l(enc.problem == :too_short ? :text_multirdp_encryption_too_short : :text_multirdp_encryption_missing,
+                                   env: enc::ENV_NAME, file: enc.key_file_path, min: enc::MIN_KEY_LENGTH) %></span>
+  <% end %>
+</p>
+<p class="info"><%= l(:text_multirdp_encryption_key_info, env: enc::ENV_NAME, file: enc.key_file_path) %></p>
+<% if enc.source == :database %>
+  <p class="info"><strong><%= l(:text_multirdp_encryption_key_database_warning) %></strong></p>
+<% end %>

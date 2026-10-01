@@ -55,6 +55,25 @@ class MultirdpLicenseTest < ActiveSupport::TestCase
     assert_equal '', license.servers.first['domain']
   end
 
+  def test_rdp_passwords_per_server_encrypted_and_pruned
+    license = create_license
+    license.set_rdp_password(SERVER_ID, 'ServerGeheim!')
+    license.save!
+    raw = MultirdpLicense.connection.select_value("SELECT secrets FROM multirdp_licenses WHERE id = #{license.id}")
+    assert raw.present?
+    assert_not_includes raw, 'ServerGeheim'
+    assert_equal 'ServerGeheim!', license.reload.rdp_password_for(SERVER_ID)
+    assert_equal [SERVER_ID], license.rdp_password_server_ids
+    assert license.rdp_password_updated_at(SERVER_ID).present?
+    assert_equal 1, license.revision, 'Kennwort ändert die Fassung der Vorgabe nicht'
+
+    # Server entfernen -> Kennwort wird mit entfernt
+    license.data = { 'servers' => [], 'apps' => [] }
+    license.save!
+    assert_nil license.reload.secrets
+    assert_nil license.rdp_password_for(SERVER_ID)
+  end
+
   def test_duplicate_ids_rejected
     license = MultirdpLicense.new(name: 'x')
     data = sample_data

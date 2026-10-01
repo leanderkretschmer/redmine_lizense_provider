@@ -27,6 +27,7 @@
          <% if server['username'].present? %>, <%= h server['username'] %><% end %>
          <% if server['domain'].present? %>@<%= h server['domain'] %><% end %>
          , VPN: <%= multirdp_vpn_mode_label(server['vpnMode']) %><% if server['vpnEndpoint'].present? %> (<%= h server['vpnEndpoint'] %>)<% end %>
+         , <%= l(:label_multirdp_rdp_password) %>: <%= @license.rdp_password_for(server['id']) ? l(:label_multirdp_secret_stored_short) : l(:label_multirdp_secret_none) %>
          <br /><small class="multirdp-uuid"><%= h server['id'] %></small></p>
       <ul>
         <% @license.apps_for(server['id']).each do |app| %>

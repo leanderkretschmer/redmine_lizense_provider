@@ -30,11 +30,13 @@ class MultirdpLicensesController < ApplicationController
     @license = MultirdpLicense.new
     @license.created_by = User.current
     assign_from_params(@license)
-    if @license.save
+    if @license.errors.empty? && @license.save
       MultirdpEvent.record!(MultirdpEvent::LICENSE_CREATED, ip: request.remote_ip, detail: "license_id=#{@license.id} #{@license.name}")
+      MultirdpEvent.record!(MultirdpEvent::RDP_PASSWORD_STORED, ip: request.remote_ip, detail: "license_id=#{@license.id}") if @rdp_password_changed
       flash[:notice] = l(:notice_successful_create)
       redirect_to multirdp_license_path(@license)
     else
+      @license.validate if @license.errors.empty?
       render :new
     end
   end
@@ -43,12 +45,14 @@ class MultirdpLicensesController < ApplicationController
 
   def update
     assign_from_params(@license)
-    if @license.save
+    if @license.errors.empty? && @license.save
       MultirdpEvent.record!(MultirdpEvent::LICENSE_UPDATED, ip: request.remote_ip,
                             detail: "license_id=#{@license.id} revision=#{@license.revision}")
+      MultirdpEvent.record!(MultirdpEvent::RDP_PASSWORD_STORED, ip: request.remote_ip, detail: "license_id=#{@license.id}") if @rdp_password_changed
       flash[:notice] = l(:notice_successful_update)
       redirect_to multirdp_license_path(@license)
     else
+      @license.validate if @license.errors.empty?
       render :edit
     end
   end
@@ -87,6 +91,29 @@ class MultirdpLicensesController < ApplicationController
     attrs = attrs.permit(:name, :notes, :grace_days) if attrs.respond_to?(:permit)
     license.safe_attributes = attrs.to_h
     license.data = build_data(license)
+    apply_rdp_passwords(license)
+  end
+
+  # RDP-Kennwörter aus den Server-Zeilen: neues Kennwort setzen oder vorhandenes entfernen.
+  def apply_rdp_passwords(license)
+    hash_values(params.dig(:license, :servers)).each do |s|
+      s = s.to_unsafe_h if s.respond_to?(:to_unsafe_h)
+      server_id = s['id'].to_s.strip.downcase
+      next if server_id.empty?
+
+      if s['rdp_password'].to_s.present?
+        if s['rdp_password'].to_s.bytesize > 255
+          license.errors.add(:base, l(:error_multirdp_rdp_password_invalid))
+          next
+        end
+        license.set_rdp_password(server_id, s['rdp_password'].to_s)
+        @rdp_password_changed = true
+      elsif s['rdp_password_remove'].to_s == '1'
+        @rdp_password_changed = true if license.remove_rdp_password(server_id)
+      end
+    end
+  rescue MultirdpLicenses::EncryptionUnavailable
+    license.errors.add(:base, l(:error_multirdp_encryption_unavailable))
   end
 
   # Baut `data` aus dem Formular; Symbole werden hochgeladen oder übernommen.

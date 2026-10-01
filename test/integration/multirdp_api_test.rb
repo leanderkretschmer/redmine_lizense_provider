@@ -35,6 +35,21 @@ class MultirdpApiTest < Redmine::IntegrationTest
     token
   end
 
+  # Plugin-Konfiguration zeigt den aktiven Schlüssel und seine Quelle (nur Administratoren).
+  def test_plugin_settings_page_shows_key
+    log_user('admin', 'admin')
+    get '/settings/plugin/redmine_lizense_provider'
+    assert_response :success
+    assert_select 'input[readonly][value=?]', MultirdpLicenses::Encryption::TEST_KEY
+    assert_select 'input[name=?]', 'settings[encryption_key]'
+    assert_match(/Testschlüssel|test key/i, response.body)
+    reset!
+    https!
+    log_user('jsmith', 'jsmith')
+    get '/settings/plugin/redmine_lizense_provider'
+    assert_response 403
+  end
+
   # Abschnitt 7: Freigeben und Ablehnen nur per POST.
   def test_get_does_not_approve
     login
@@ -159,6 +174,16 @@ class MultirdpApiTest < Redmine::IntegrationTest
     assert_response 404
     assert_equal 'kein_geheimnis', json['error']
 
+    # Kennwort aus der Lizenz gilt für alle Zuteilungen …
+    @license.set_rdp_password(SERVER_ID, 'LizenzGeheim!')
+    @license.save!
+    get "/multirdp/api/v1/secrets/#{SERVER_ID}/rdp", headers: auth(token)
+    assert_response :success
+    assert_equal 'LizenzGeheim!', json['password']
+    get '/multirdp/api/v1/license', headers: auth(token)
+    assert_equal [SERVER_ID], json['rdp_passwords_available']
+
+    # … ein abweichendes Kennwort der Zuteilung hat Vorrang.
     @grant.store_rdp_password!(SERVER_ID, 'RdpGeheim!')
     get '/multirdp/api/v1/license', headers: auth(token)
     assert_equal [SERVER_ID], json['rdp_passwords_available']

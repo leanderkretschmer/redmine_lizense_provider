@@ -69,17 +69,25 @@ Der Schlüssel wird in dieser Reihenfolge gesucht:
    eine Zeile). Liegt **nicht im Repo**; im Container muss sie als Volume gemountet
    werden, sonst geht sie beim Neubau verloren.
 3. In der Testumgebung ein fester Testschlüssel.
+4. **Plugin-Einstellung in der Redmine-Datenbank.** Fehlen 1 und 2, erzeugt das Plugin
+   beim ersten Start selbst einen Schlüssel (64 Hex-Zeichen) und legt ihn dort ab
+   (Entscheidung des Auftraggebers vom 2026-10-01). Der aktive Schlüssel und seine Quelle
+   sind unter Administration → Plugins → Lizenzen → Konfigurieren einsehbar.
 
-Mindestlänge 32 Zeichen; erzeugen z. B. mit `openssl rand -hex 32`.
+Mindestlänge 32 Zeichen; von Hand erzeugen z. B. mit `openssl rand -hex 32`.
 
 Hat die Redmine-Instanz `ActiveRecord::Encryption` bereits selbst konfiguriert
 (Rails-Credentials), wird diese Konfiguration unverändert benutzt.
 
-**Ohne Schlüssel** läuft das Plugin, zeigt in der Verwaltung eine Warnung, und das
-Hinterlegen einer VPN-Konfiguration wird abgewiesen. **Ein Schlüsselwechsel macht alle
-hinterlegten Konfigurationen unlesbar** — vorher Konfigurationen neu hinterlegen oder
-den Schlüssel sichern. Er gehört in dieselbe Sicherung wie die Datenbank, aber nicht in
-dieselbe Datei.
+**Einschränkung bei Quelle 4:** Liegt der Schlüssel in der Datenbank, enthält ein
+Datenbankabzug Schlüssel und Geheimnisse zusammen; die Anforderung „ein Datenbankabzug
+allein darf nicht reichen“ (Abschnitt 8) ist dann nicht erfüllt. Wer das will, übernimmt
+den angezeigten Schlüssel unverändert in `MULTIRDP_KEY`; die Geheimnisse bleiben lesbar,
+weil der Wert derselbe ist.
+
+**Ein Schlüsselwechsel macht alle hinterlegten Geheimnisse unlesbar** — vorher neu
+hinterlegen oder den Schlüssel sichern. Er gehört in dieselbe Sicherung wie die
+Datenbank, aber nicht in dieselbe Datei.
 
 ---
 
@@ -89,10 +97,10 @@ dieselbe Datei.
 init.rb                          Registrierung, Admin-Menü, Hooks, Verschlüsselung
 config/routes.rb                 alle Routen (siehe unten)
 config/locales/{de,en}.yml       alle Texte
-db/migrate/001…004               vier Tabellen
+db/migrate/001…005               vier Tabellen, Kennwortspalte der Lizenz
 lib/multirdp_licenses.rb         Konstanten (Fristen, Grenzen)
 lib/multirdp_licenses/
-  encryption.rb                  Schlüssel laden, ActiveRecord::Encryption konfigurieren
+  encryption.rb                  Schlüssel laden/erzeugen, ActiveRecord::Encryption konfigurieren
   data_schema.rb                 Normalisierung/Prüfung von data und settings
   icon_validator.rb              PNG-Prüfung (quadratisch, ≤1024 px, ≤256 KiB)
   rate_limiter.rb                Anmeldeversuche je IP (über multirdp_events)
@@ -104,7 +112,7 @@ app/controllers/
   multirdp_licenses_controller.rb      /admin/multirdp/licenses  (Admin)
   multirdp_grants_controller.rb        /admin/multirdp/grants    (Admin)
 app/mailers/multirdp_mailer.rb   Freigabe-Mail über Redmines Mailer
-app/views/…                      Formulare, Listen, Hook-Partials, Mail
+app/views/…                      Formulare, Listen, Hook-Partials, Mail, Plugin-Konfiguration
 assets/                          CSS für das Freigabefenster, JS für das Vorgabe-Formular
 test/                            Unit-, Funktions- und Integrationstests
 ```
@@ -222,10 +230,17 @@ Ein fehlgeschlagener Versand bricht die Anmeldung nicht ab.
 ## RDP-Kennwörter (Entscheidung des Auftraggebers vom 2026-09-23)
 
 Abweichend von Abschnitt 9 der Vorgabe hat der Auftraggeber entschieden, dass der
-**Administrator je Zuteilung und Server ein RDP-Kennwort hinterlegt**. Umsetzung wie bei
-der WireGuard-Konfiguration: verschlüsselt in `multirdp_grants.secrets`, in der
-Oberfläche nie sichtbar (nur „hinterlegt, zuletzt geändert am …“, Ersetzen, Löschen),
-Auslieferung nur an freigegebene Geräte, jeder Abruf im Protokoll
+**Administrator RDP-Kennwörter hinterlegt**:
+
+- **In der Lizenz je Server** (Lizenzformular, Feld „RDP-Kennwort“ in der Server-Zeile):
+  gilt für alle Benutzer der Lizenz. Verschlüsselt in `multirdp_licenses.secrets`; wird
+  ein Server gelöscht, verschwindet sein Kennwort mit. Ändert die `revision` nicht.
+- **Je Zuteilung je Server** (Zuteilung → „Abweichendes RDP-Kennwort“): nur nötig, wenn
+  ein Benutzer ein anderes Kennwort hat; hat Vorrang vor dem der Lizenz. Verschlüsselt in
+  `multirdp_grants.secrets`.
+
+In der Oberfläche ist ein Kennwort nie sichtbar (nur „hinterlegt, zuletzt geändert am …“,
+Ersetzen, Entfernen). Auslieferung nur an freigegebene Geräte, jeder Abruf im Protokoll
 (`rdp_password_fetched` mit Gerät, Zeit, IP, Server-ID).
 
 Erweiterung der Schnittstelle (muss der Client nachziehen):

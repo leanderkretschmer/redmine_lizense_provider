@@ -34,7 +34,7 @@ rescue StandardError => e
 end
 
 Redmine::Plugin.register :redmine_lizense_provider do
-  name 'multiRDP Lizenzen'
+  name 'Lizenzen'
   author 'Leander Kretschmer'
   description 'Lizenzen für den multiRDP-Client: Zuteilung an Benutzer, Gerätefreigabe, ' \
               'Verteilung der Einrichtung und der WireGuard-Konfiguration über eine eigene Schnittstelle. / ' \
@@ -45,6 +45,9 @@ Redmine::Plugin.register :redmine_lizense_provider do
   author_url 'https://github.com/leanderkretschmer'
 
   requires_redmine version_or_higher: '6.0.0'
+
+  # Automatisch erzeugter Verschlüsselungsschlüssel (nur benutzt, wenn weder ENV noch Datei vorliegt).
+  settings default: { 'encryption_key' => '' }, partial: 'settings/redmine_lizense_provider'
 
   menu :admin_menu, :multirdp_licenses,
        { controller: 'multirdp_licenses', action: 'index' },

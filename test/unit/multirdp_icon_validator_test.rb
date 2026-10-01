@@ -17,6 +17,16 @@ class MultirdpEncryptionProblemTest < ActiveSupport::TestCase
     assert_not MultirdpLicenses::Encryption.ready?
   end
 
+  def test_key_is_generated_into_plugin_settings
+    Setting.plugin_redmine_lizense_provider = { 'encryption_key' => '' }
+    key = MultirdpLicenses::Encryption.stored_or_generated_key
+    assert_match(/\A[0-9a-f]{64}\z/, key)
+    assert_equal key, Setting.plugin_redmine_lizense_provider['encryption_key']
+    assert_equal key, MultirdpLicenses::Encryption.stored_or_generated_key, 'zweiter Aufruf liefert denselben Schlüssel'
+  ensure
+    Setting.plugin_redmine_lizense_provider = { 'encryption_key' => '' }
+  end
+
   def test_valid_key_clears_problem
     MultirdpLicenses::Encryption.reset_for_tests!
     ENV['MULTIRDP_KEY'] = 'a' * 40

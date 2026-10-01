@@ -102,6 +102,38 @@ class MultirdpLicensesControllerTest < Redmine::ControllerTest
     assert_nil license.apps.last['icon']
   end
 
+  def test_rdp_password_from_server_form
+    license = create_license
+    patch :update, params: {
+      id: license.id,
+      license: {
+        name: license.name,
+        servers: { '0' => { id: SERVER_ID, name: 'srv', host: 'h', rdp_password: 'FormGeheim!' } },
+        apps: {}
+      }
+    }
+    assert_redirected_to multirdp_license_path(license)
+    license.reload
+    assert_equal 'FormGeheim!', license.rdp_password_for(SERVER_ID)
+    assert_nil license.servers.first['rdp_password'], 'Kennwort darf nicht in data landen'
+    assert_equal 1, MultirdpEvent.where(action: 'rdp_password_stored').count
+
+    get :edit, params: { id: license.id }
+    assert_response :success
+    assert_no_match(/FormGeheim/, response.body)
+    assert_select 'input[name=?]', 'license[servers][0][rdp_password_remove]'
+    get :data_json, params: { id: license.id }
+    assert_no_match(/FormGeheim/, response.body)
+
+    # leer lassen = unverändert
+    patch :update, params: { id: license.id, license: { name: license.name, servers: { '0' => { id: SERVER_ID, name: 'srv', host: 'h', rdp_password: '' } }, apps: {} } }
+    assert_equal 'FormGeheim!', license.reload.rdp_password_for(SERVER_ID)
+
+    # entfernen
+    patch :update, params: { id: license.id, license: { name: license.name, servers: { '0' => { id: SERVER_ID, name: 'srv', host: 'h', rdp_password_remove: '1' } }, apps: {} } }
+    assert_nil license.reload.rdp_password_for(SERVER_ID)
+  end
+
   def test_show_with_user_search_and_grant
     license = create_license
     get :show, params: { id: license.id, q: 'smith' }

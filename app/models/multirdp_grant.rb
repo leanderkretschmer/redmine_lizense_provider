@@ -145,6 +145,15 @@ class MultirdpGrant < ActiveRecord::Base
     entry.is_a?(Hash) ? entry['rdp_password'] : nil
   end
 
+  # Kennwort für den Client: abweichendes Kennwort der Zuteilung, sonst das der Lizenz.
+  def effective_rdp_password(server_id)
+    rdp_password_for(server_id) || license&.rdp_password_for(server_id)
+  end
+
+  def effective_rdp_password_server_ids
+    (rdp_password_server_ids + Array(license&.rdp_password_server_ids)).uniq
+  end
+
   def rdp_password_updated_at(server_id)
     entry = secrets_hash[server_id.to_s]
     entry.is_a?(Hash) && entry['rdp_password_updated_at'] ? Time.zone.parse(entry['rdp_password_updated_at']) : nil

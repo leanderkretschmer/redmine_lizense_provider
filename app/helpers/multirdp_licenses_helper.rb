@@ -50,7 +50,7 @@ module MultirdpLicensesHelper
 
   # Zeigt nur, ob RDP-Kennwörter hinterlegt sind — nie den Inhalt.
   def multirdp_rdp_password_summary(grant)
-    ids = grant.rdp_password_server_ids
+    ids = grant.effective_rdp_password_server_ids
     return l(:label_multirdp_secret_none) if ids.empty?
 
     l(:label_multirdp_rdp_password_count, count: ids.size)

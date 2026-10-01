@@ -47,7 +47,7 @@
   </div>
 
   <div class="box">
-    <h3><%= l(:label_multirdp_rdp_password) %></h3>
+    <h3><%= l(:label_multirdp_rdp_password_override) %></h3>
     <p class="info"><%= l(:text_multirdp_rdp_password_info) %></p>
     <% if @license.servers.empty? %>
       <p class="nodata"><%= l(:label_multirdp_no_servers) %></p>
@@ -61,6 +61,8 @@
             &mdash; <%= l(:label_multirdp_secret_stored_at, time: format_time(pw_at)) %>
             <%= link_to sprite_icon('del', l(:button_delete)), rdp_password_for_multirdp_grant_path(@grant, server['id']), method: :delete,
                         data: { confirm: l(:text_are_you_sure) }, class: 'icon icon-del' %>
+          <% elsif @license.rdp_password_for(server['id']) %>
+            &mdash; <%= l(:label_multirdp_rdp_password_from_license) %>
           <% else %>
             &mdash; <%= l(:label_multirdp_secret_none) %>
           <% end %>

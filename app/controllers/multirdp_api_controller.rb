@@ -90,7 +90,7 @@ class MultirdpApiController < ApplicationController
       data: license.data,
       settings: @grant.settings,
       secrets_available: @grant.secret_server_ids,
-      rdp_passwords_available: @grant.rdp_password_server_ids
+      rdp_passwords_available: @grant.effective_rdp_password_server_ids
     }
   end
 
@@ -141,7 +141,7 @@ class MultirdpApiController < ApplicationController
   # GET /multirdp/api/v1/secrets/:server_id/rdp — RDP-Kennwort des Servers (Erweiterung, siehe README).
   def show_rdp_password
     server_id = params[:server_id].to_s.downcase
-    password = @grant.rdp_password_for(server_id)
+    password = @grant.effective_rdp_password(server_id)
     return api_error(404, 'kein_geheimnis') if password.nil?
 
     MultirdpEvent.record!(MultirdpEvent::RDP_PASSWORD_FETCHED, user: @grant.user, grant: @grant, device: @device,

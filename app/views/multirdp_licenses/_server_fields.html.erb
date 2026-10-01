@@ -17,5 +17,14 @@
   <p><label><%= l(:field_multirdp_vpn_endpoint) %></label>
      <input type="text" name="<%= p %>[vpnEndpoint]" value="<%= h server['vpnEndpoint'] %>" size="30" />
      <em class="info"><%= l(:text_multirdp_vpn_endpoint_info) %></em></p>
+  <p><label><%= l(:label_multirdp_rdp_password) %></label>
+     <% pw_at = server['id'].present? ? @license.rdp_password_updated_at(server['id']) : nil %>
+     <% if pw_at %>
+       <span class="multirdp-rdp-stored"><%= l(:label_multirdp_secret_stored_at, time: format_time(pw_at)) %></span>
+       <label class="inline"><input type="checkbox" name="<%= p %>[rdp_password_remove]" value="1" /> <%= l(:button_multirdp_rdp_password_remove) %></label>
+     <% end %>
+     <input type="password" name="<%= p %>[rdp_password]" value="" size="30" autocomplete="new-password"
+            placeholder="<%= pw_at ? l(:button_multirdp_secret_replace) : l(:button_multirdp_secret_store) %>" <%= 'disabled' unless MultirdpLicenses::Encryption.ready? %> />
+     <em class="info"><%= l(:text_multirdp_rdp_password_server_info) %></em></p>
   <p><button type="button" class="multirdp-remove-row icon icon-del"><%= sprite_icon('del', l(:button_delete)) %></button></p>
 </div>
